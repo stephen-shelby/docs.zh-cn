@@ -289,18 +289,18 @@ select count(*) from profile_wos_p7;
 
 ### 配置
 
-* fe配置文件路径为fe/conf，如果需要自定义hadoop集群的配置可以在该目录下添加配置文件，例如：hdfs集群采用了高可用的nameservice，需要将hadoop集群中的hdfs-site.xml放到该目录下，如果hdfs配置了viewfs，需要将core-site.xml放到该目录下。
-* be配置文件路径为be/conf，如果需要自定义hadoop集群的配置可以在该目录下添加配置文件，例如：hdfs集群采用了高可用的nameservice，需要将hadoop集群中的hdfs-site.xml放到该目录下，如果hdfs配置了viewfs，需要将core-site.xml放到该目录下。
+* fe配置文件路径为$FE_HOME/conf，如果需要自定义hadoop集群的配置可以在该目录下添加配置文件，例如：hdfs集群采用了高可用的nameservice，需要将hadoop集群中的hdfs-site.xml放到该目录下，如果hdfs配置了viewfs，需要将core-site.xml放到该目录下。
+* be配置文件路径为$BE_HOME/conf，如果需要自定义hadoop集群的配置可以在该目录下添加配置文件，例如：hdfs集群采用了高可用的nameservice，需要将hadoop集群中的hdfs-site.xml放到该目录下，如果hdfs配置了viewfs，需要将core-site.xml放到该目录下。
 * be所在的机器也需要配置JAVA_HOME，一定要配置成jdk环境，不能配置成jre环境
 * kerberos 支持：
   1. 在所有的fe/be机器上用`kinit -kt keytab_path principal`登陆，该用户需要有访问hive和hdfs的权限。kinit命令登陆是有实效性的，需要将其放入crontab中定期执行。
-  2. 把hadoop集群中的hive-site.xml/core-site.xml/hdfs-site.xml放到fe/conf下，把core-site.xml/hdfs-site.xml放到be/conf下。
-  3. 在fe/conf/fe.conf文件中的JAVA_OPTS/JAVA_OPTS_FOR_JDK_9选项加上 -Djava.security.krb5.conf:/etc/krb5.conf，/etc/krb5.conf是krb5.conf文件的路径，可以根据自己的系统调整。
+  2. 把hadoop集群中的hive-site.xml/core-site.xml/hdfs-site.xml放到$FE_HOME/conf下，把core-site.xml/hdfs-site.xml放到$BE_HOME/conf下。
+  3. 在$FE_HOME/conf/fe.conf文件中的JAVA_OPTS/JAVA_OPTS_FOR_JDK_9选项加上 -Djava.security.krb5.conf:/etc/krb5.conf，/etc/krb5.conf是krb5.conf文件的路径，可以根据自己的系统调整。
   4. resource中的uri地址一定要使用域名，并且相应的hive和hdfs的域名与ip的映射都需要配置到/etc/hosts中。
 * S3 支持:
   2.0.1及之后的版本默认不开启此功能，可以按照以下步骤配置后使用。
-  1. 下载[依赖库](https://cdn-thirdparty.starrocks.com/hive_S3_jar.tar.gz)并添加到fe/lib/和be/lib/hadoop/hdfs/路径下。
-  2. 在fe/conf/core-site.xml和be/conf/core-site.xml中加入如下配置，并重启fe和be。
+  1. 下载[依赖库](https://cdn-thirdparty.starrocks.com/hive_S3_jar.tar.gz)并添加到$FE_HOME/lib/和$BE_HOME/lib/hadoop/hdfs/路径下。
+  2. 在$FE_HOME/conf/core-site.xml和$BE_HOME/conf/core-site.xml中加入如下配置，并重启fe和be。
 
 ~~~xml
 <configuration>
@@ -332,11 +332,10 @@ select count(*) from profile_wos_p7;
 
 #### 手动更新元数据缓存
 
-* hive的partition信息以及partition对应的文件信息都会缓存在starrocks中，缓存的刷新时间为hive_meta_cache_refresh_interval_s，默认7200，缓存的失效时间为hive_meta_cache_ttl_s，默认86400。
-
-* 可以手动刷新元数据信息：
+* 手动刷新元数据信息：
   1. hive中新增或者删除分区时，需要刷新**表**的元数据信息：`REFRESH EXTERNAL TABLE hive_t`，其中hive_t是starrocks中的外表名称。
   2. hive中向某些partition中新增数据时，需要**指定partition**进行刷新：`REFRESH EXTERNAL TABLE hive_t PARTITION ('k1=01/k2=02', 'k1=03/k2=04')`，其中hive_t是starrocks中的外表名称，'k1=01/k2=02'、 'k1=03/k2=04'是hive中的partition名称。
+* hive的partition信息以及partition对应的文件信息都会缓存在starrocks中，缓存的刷新时间为hive_meta_cache_refresh_interval_s，默认7200，缓存的失效时间为hive_meta_cache_ttl_s，默认86400。该种刷新方式属于后台全量更新，用户可以开启自动增量更新元数据缓存的功能，详见下文。
 
 #### 自动增量更新元数据缓存
 
@@ -344,7 +343,7 @@ select count(*) from profile_wos_p7;
 
 * Hive Metastore开启event机制
 
-   用户需要在$HiveMetastore/conf/hive-site.xml中添加如下配置，并重启Hive Metastore.
+   用户需要在$HiveMetastore/conf/hive-site.xml中添加如下配置，并重启Hive Metastore. 以下配置为Hive Metastore 3.1.2版本的配置，用户可以将以下配置先拷贝到hive-site.xml中进行验证，因为在Hive Metastore中配置不存在的参数只会提示WARN信息，不会抛出任何异常。
 
 ~~~xml
 <property>
@@ -379,7 +378,7 @@ select count(*) from profile_wos_p7;
 
 * StarRocks开启自动增量元数据同步
 
-    用户需要在$FE/conf/fe.conf中添加如下配置
+    用户需要在$FE_HOME/conf/fe.conf中添加如下配置并重启FE.
     `enable_hms_events_incremental_sync=true`
     自动增量元数据同步相关配置如下，如无特殊需求，无需修改。
 
@@ -392,8 +391,8 @@ select count(*) from profile_wos_p7;
    | hms_process_events_parallel_num    | 处理Events事件的并发数                    | 4 |
 
 * 注意事项
-  * 不同版本Hive Metastore的Events事件可能不同，且上述开启HiveMetastore Event机制的配置在不同版本也存在不同。使用时相关配置可根据实际版进行适当调整。
-  * 当前Hive元数据缓存为懒加载，即如果新增分区，只会将新增分区的partition key进行缓存，不会缓存该分区的文件信息。只有实际查询该分区或者手动执行refresh分区，该分区文件缓存信息才会进行加载。分区缓存信息一旦加载，后续自动增量处理机制就会对已缓存的分区进行增量更新。
+  * 不同版本Hive Metastore的Events事件可能不同，且上述开启HiveMetastore Event机制的配置在不同版本也存在不同。使用时相关配置可根据实际版进行适当调整。当前已经验证可以开启Hive Metastore Event机制的版本有2.X和3.X。用户可以在FE日志中搜索"event id"来验证event是否开启成功，如果没有开启成功，event id始终保持为0。如果无法判断是否成功开启Event机制，请在StarRocks用户交流群中联系值班同学进行排查。
+  * 当前Hive元数据缓存模式为懒加载，即：如果HIVE新增了分区，StarRocks只会将新增分区的partition key进行缓存，不会立即缓存该分区的文件信息。只有当查询该分区时或者用户手动执行refresh分区操作时，该分区的文件信息才会被加载。StarRocks首次缓存该分区信息后，该分区后续的元信息变更就会自动同步到StarRocks中。
   * 手动执行缓存方式执行效率较低，相比之下自动增量更新性能开销较小，建议用户开启该功能进行更新缓存。
   * 当前自动更新不支持add/drop column等schema change操作，Hive表结构如有更改，需要重新创建Hive外表。Hive外表支持Schema change将会在近期推出，敬请期待。
 
