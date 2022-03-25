@@ -330,16 +330,17 @@ select count(*) from profile_wos_p7;
 
 ### 缓存更新
 
+Hive Table的Partition统计信息以及Partition下面的文件信息可以缓存到StarRocks FE中，缓存的内存结构为Guava LoadingCache, 该缓存的自动刷新时间配置为`hive_meta_cache_refresh_interval_s`，默认7200，缓存的失效时间配置为`hive_meta_cache_ttl_s`，默认86400。
+
 #### 手动更新元数据缓存
 
 * 手动刷新元数据信息：
   1. hive中新增或者删除分区时，需要刷新**表**的元数据信息：`REFRESH EXTERNAL TABLE hive_t`，其中hive_t是starrocks中的外表名称。
   2. hive中向某些partition中新增数据时，需要**指定partition**进行刷新：`REFRESH EXTERNAL TABLE hive_t PARTITION ('k1=01/k2=02', 'k1=03/k2=04')`，其中hive_t是starrocks中的外表名称，'k1=01/k2=02'、 'k1=03/k2=04'是hive中的partition名称。
-* hive的partition信息以及partition对应的文件信息都会缓存在starrocks中，缓存的刷新时间为hive_meta_cache_refresh_interval_s，默认7200，缓存的失效时间为hive_meta_cache_ttl_s，默认86400。该种刷新方式属于后台全量更新，用户可以开启自动增量更新元数据缓存的功能，详见下文。
 
 #### 自动增量更新元数据缓存
 
-自动增量更新元数据缓存主要是通过定期消费Hive Metastore的event来实现，新增分区以及分区新增数据无需通过手动执行refresh来更新。用户需要在Hive Metastore端开启元数据Event机制。
+自动增量更新元数据缓存主要是通过定期消费Hive Metastore的event来实现，新增分区以及分区新增数据无需通过手动执行refresh来更新。用户需要在Hive Metastore端开启元数据Event机制。相比Loading Cache的自动刷新机制，自动增量更新性能更好，建议用户开启该功能。开启该功能后，Loading Cache的自动刷新机制将不再生效。
 
 * Hive Metastore开启event机制
 
@@ -392,7 +393,7 @@ select count(*) from profile_wos_p7;
 
 * 注意事项
   * 不同版本Hive Metastore的Events事件可能不同，且上述开启HiveMetastore Event机制的配置在不同版本也存在不同。使用时相关配置可根据实际版进行适当调整。当前已经验证可以开启Hive Metastore Event机制的版本有2.X和3.X。用户可以在FE日志中搜索"event id"来验证event是否开启成功，如果没有开启成功，event id始终保持为0。如果无法判断是否成功开启Event机制，请在StarRocks用户交流群中联系值班同学进行排查。
-  * 当前Hive元数据缓存模式为懒加载，即：如果HIVE新增了分区，StarRocks只会将新增分区的partition key进行缓存，不会立即缓存该分区的文件信息。只有当查询该分区时或者用户手动执行refresh分区操作时，该分区的文件信息才会被加载。StarRocks首次缓存该分区信息后，该分区后续的元信息变更就会自动同步到StarRocks中。
+  * 当前Hive元数据缓存模式为懒加载，即：如果HIVE新增了分区，StarRocks只会将新增分区的partition key进行缓存，不会立即缓存该分区的文件信息。只有当查询该分区时或者用户手动执行refresh分区操作时，该分区的文件信息才会被加载。StarRocks首次缓存该分区统计信息后，该分区后续的元数据变更就会自动同步到StarRocks中。
   * 手动执行缓存方式执行效率较低，相比之下自动增量更新性能开销较小，建议用户开启该功能进行更新缓存。
   * 当前自动更新不支持add/drop column等schema change操作，Hive表结构如有更改，需要重新创建Hive外表。Hive外表支持Schema change将会在近期推出，敬请期待。
 
