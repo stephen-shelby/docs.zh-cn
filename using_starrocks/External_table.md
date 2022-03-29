@@ -299,8 +299,10 @@ select count(*) from profile_wos_p7;
   4. resource中的uri地址一定要使用域名，并且相应的hive和hdfs的域名与ip的映射都需要配置到/etc/hosts中。
 * S3 支持:
   2.0.1及之后的版本默认不开启此功能，可以按照以下步骤配置后使用。
-  1. 下载[依赖库](https://cdn-thirdparty.starrocks.com/hive_S3_jar.tar.gz)并添加到$FE_HOME/lib/和$BE_HOME/lib/hadoop/hdfs/路径下。
-  2. 在$FE_HOME/conf/core-site.xml和$BE_HOME/conf/core-site.xml中加入如下配置，并重启fe和be。
+
+  1. 下载[依赖库](https://cdn-thirdparty.starrocks.com/hive_s3_jar.tar.gz)并添加到fe/lib/和be/lib/hadoop/hdfs/路径下。
+  2. 在fe/conf/core-site.xml和be/conf/core-site.xml中加入如下配置，并重启fe和be。
+
 
 ~~~xml
 <configuration>
@@ -435,7 +437,7 @@ DISTRIBUTED BY HASH(k1) BUCKETS 10
 PROPERTIES
 (
     "host" = "127.0.0.1",
-    "port" = "9030",
+    "port" = "9020",
     "user" = "user",
     "password" = "passwd",
     "database" = "db_test",
@@ -535,21 +537,13 @@ USE iceberg_test;
 
 ~~~sql
 CREATE EXTERNAL TABLE `iceberg_tbl` ( 
-
 `id` bigint NULL, 
-
 `data` varchar(200) NULL 
-
 ) ENGINE=ICEBERG 
-
 PROPERTIES ( 
-
 "resource" = "iceberg0", 
-
 "database" = "iceberg", 
-
 "table" = "iceberg_table" 
-
 ); 
 ~~~
 

@@ -17,7 +17,6 @@
 - 优化 Compaction 的性能，支持导入 10000 列的数据。
 - 优化 StarRocks 首次 Scan 和 Page Cache 的性能。通过降低随机 I/O ，提升 StarRocks 首次 Scan 的性能，如果首次 Scan 的磁盘为 SATA 盘，则性能提升尤为明显。另外，StarRocks 的 Page Cache 支持直接存放原始数据，无需经过 Bitshuffle 编码。因此读取 StarRocks 的 Page Cache 时无需额外解码，提高缓存命中率，进而大大提升查询效率。
 - 支持主键模型（Primary Key Model）变更表结构（Schema Change），您可以执行 `ALTER TABLE` 增删和修改索引。
-- 【公测中】支持字符串最大长度为 1MB。
 - 优化 JSON 导入性能，并去除了 JSON 导入中单个 JSON 文件不超过 100MB 大小的限制。
 - 优化 Bitmap Index 性能。
 - 优化通过外表方式读取 Hive 数据的性能，支持 Hive 的存储格式为 CSV。
@@ -41,3 +40,16 @@
 ### Others
 
 flink-source-connector 支持 Flink 批量读取 StarRocks 数据，实现了直连并行读取 BE 节点、自动谓词下推等特性。相关文档，请参见 [Flink Connector](../unloading/Flink_connector.md)。
+
+## 2.1.2
+
+发布日期： 2022年3月14日
+
+### Bugfix
+
+- 修复从 1.19 升级到 2.1 会因 `chunk_size` 不匹配导致 BE 崩溃的问题。[#3834](https://github.com/StarRocks/starrocks/issues/3834)
+- 修复在从 2.0 升级到 2.1 的过程中有导入时，可能导致导入任务失败的问题。[#3828](https://github.com/StarRocks/starrocks/issues/3828)
+- 修复对单 tablet 的表在做聚合操作时因无法得到合理的执行计划而导致查询失败的问题。[#3854](https://github.com/StarRocks/starrocks/issues/3854)
+- 修复 FE 在低基数全局字典优化中收集信息时可能导致死锁的问题。[#3839](https://github.com/StarRocks/starrocks/issues/3839)
+- 修复因死锁导致 BE 节点假死且查询失败的问题。
+- 修复因 `SHOW VARIABLES` 命令出错而导致 BI 工具无法连接的问题。[#3708](https://github.com/StarRocks/starrocks/issues/3708)
