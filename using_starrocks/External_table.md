@@ -303,7 +303,6 @@ select count(*) from profile_wos_p7;
   1. 下载[依赖库](https://cdn-thirdparty.starrocks.com/hive_s3_jar.tar.gz)并添加到fe/lib/和be/lib/hadoop/hdfs/路径下。
   2. 在fe/conf/core-site.xml和be/conf/core-site.xml中加入如下配置，并重启fe和be。
 
-
 ~~~xml
 <configuration>
    <property>
