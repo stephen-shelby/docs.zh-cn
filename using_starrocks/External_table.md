@@ -301,7 +301,7 @@ select count(*) from profile_wos_p7;
 
 #### AWS S3/Tencent Cloud COS支持
 
-一. 下载[依赖库](https://cdn-thirdparty.starrocks.com/hive_s3_jar.tar.gz)并添加到fe/lib/路径下。
+一. 下载[依赖库](https://cdn-thirdparty.starrocks.com/hive_s3_jar.tar.gz)并添加到$FE_HOME/lib/路径下。
 
 二. 在 $FE_HOME/conf/core-site.xml 中加入如下配置。
 
