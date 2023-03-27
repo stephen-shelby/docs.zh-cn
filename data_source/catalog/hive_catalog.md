@@ -377,6 +377,14 @@ INSERT INTO default_catalog.olap_db.olap_tbl SELECT * FROM hive_table
 REFRESH EXTERNAL TABLE <table_name>
 ```
 
+以下情况适用于执行手动刷新元数据：
+- 用户已存在的分区有文件变更，如执行过insert overwrite partition
+- 用户hive表有schema变更
+- 用户hive表被drop后重建一个同名表。
+- 若创建catalog时指定properties中的`enable_cache_list_names=true`. 则在Hive测新增分区时，如需立即查询到，则需要执行手动刷新。
+
+refresh external table只会刷新fe中已缓存的表以及分区。
+
 ### 自动增量更新
 
 与自动异步更新策略不同，在自动增量更新策略下，FE 可以定时从 HMS 读取各种事件，进而感知 Hive 表元数据的变更情况，如增减列、增减分区和更新分区数据等，无需手动更新 Hive 表的元数据。
